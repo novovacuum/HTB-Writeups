@@ -51,37 +51,37 @@ Nmap done: 1 IP address (1 host up) scanned in 32.09 seconds
 
 The website is a blog that seems to be talking about Dogs : 
 
-![website](images/website.png) 
+![website](images/dog-website.png) 
 
 The login page confirms that it uses Backdrop CMS (also suggested by our earlier scan results) :
 
-![login](images/login.png) 
+![login](images/dog-login.png) 
 
 `nmap` also pointed out that a `.git` repository is present : 
 
-![git-repo](images/git-repo.png) 
+![git-repo](images/dog-git-repo.png)  
 
 To further inspect that repository, we can use [git-dumper](https://github.com/arthaud/git-dumper)  to download its content. After a few searches we quickly get some *mysql* database credentials inside `settings.php` : 
 
-![settings-mysql-credentials](images/settings-mysql-credentials.png) 
+![settings-mysql-credentials](images/dog-settings-mysql-credentials.png) 
 
 The about page gives us a hint on how user's email are formatted on the domain : 
 
-![about-page](images/about-page.png) 
+![about-page](images/dog-about-page.png) 
 
 Searching through the git repository for any user email that contains `dog.htb`, we find the user `tiffany` : 
 
-![user-tiffany](images/user-tiffany.png) 
+![user-tiffany](images/dog-user-tiffany.png) 
 
 ## Foothold
 
 Testing both user name and database root password gives us access to the admin panel : 
 
-![admin-panel](images/admin-panel.png) 
+![admin-panel](images/dog-admin-panel.png) 
 
 Drifting through the menus,  `Reports > Status report` displays the Backdrop CMS version : 
 
-![backdrop-cms](images/backdrop-cms.png) 
+![backdrop-cms](images/dog-backdrop-cms.png) 
 
 After a quick search, we find out that BackDrop CMS version `1.27.1` is vulnerable to [authenticated RCE](https://www.exploit-db.com/exploits/52021). The suggested exploit works by creating a ZIP file that could be used to create a web shell and be uploaded as a module under `admin/modules/install`: 
 
@@ -96,11 +96,11 @@ Your shell address: http://10.10.11.58/modules/shell/shell.php
 
 A warning message informs us that `Zip PHP extension` is not loaded on the server : 
 
-![zip-extension-not-available](images/zip-extension-not-available.png)  
+![zip-extension-not-available](images/dog-zip-extension-not-available.png)  
 
 If we try to install our module manually, by selecting the `Manual Installation` link, we get notified that only `tar, tgz, gz or bz2` extensions are allowed : 
 
-![upload-error-requires-archive](images/upload-error-requires-archive.png) 
+![upload-error-requires-archive](images/dog-upload-error-requires-archive.png) 
 
 Getting back to our exploit, we simply create a `tar` archive from the `shell` folder : 
 
@@ -110,11 +110,11 @@ tar -cfz shell.tar.gz shell/*
 
 This time, uploading the archive is successful : 
 
-![shell](images/shell.png) 
+![shell](images/dog-shell.png) 
 
 We can then access our web shell module from  `/modules/shell/shell.php` : 
 
-![web-shell-module](images/web-shell-module.png) 
+![web-shell-module](images/dog-web-shell-module.png) 
 
 If we change the `shell.php` code with some php reverse shell code : 
 
@@ -131,21 +131,21 @@ nc -lnvp 4444
 
 We get a reverse shell on the machine : 
 
-![reverse-shell](images/reverse-shell.png) 
+![reverse-shell](images/dog-reverse-shell.png)  
 
 `johncusack` and `jobert` are system users : 
 
-![system-users](images/system-users.png) 
+![system-users](images/dog-system-users.png) 
 
 But we don't have enough permissions to get the `user.txt` : 
 
-![not-enough-permissions-to-cat-user](images/not-enough-permissions-to-cat-user.png) 
+![not-enough-permissions-to-cat-user](images/dog-not-enough-permissions-to-cat-user.png) 
 
 ## Lateral Movement
 
 We decide to connect to mysql and seek through usernames and passwords : 
 
-![mysql-users-credentials](images/mysql-users-credentials.png)
+![mysql-users-credentials](images/dog-mysql-users-credentials.png)
 
 Then we try to crack `john` hash : 
 
@@ -161,13 +161,13 @@ hashcat -m 7900 hashes /opt/SecLists/Passwords/Leaked-Databases/rockyou.txt
 
 Unfortunetly, after many failed attempts, the hash won't simply crack. Trying to SSH using the same password we did for `Tiffany` with `johncusack` simply works!
 
-![johncusack-ssh](images/johncusack-ssh.png) 
+![johncusack-ssh](images/dog-johncusack-ssh.png) 
 
 ## Privilege escalation
 
 Checking for sudo rights, we see that `johncusack` can run `usr/local/bin/bee` as sudo user : 
 
-![johncusack-sudo-rights](images/johncusack-sudo-rights.png) 
+![johncusack-sudo-rights](images/dog-johncusack-sudo-rights.png) 
 
 [Bee](https://backdropcms.org/project/bee) is a command line utility for Backdrop CMS that includes commands that allow developers to interact with their sites by performing actions. 
 
@@ -220,5 +220,5 @@ Which means, if we set `--root` to the directory where the Backdrop installation
 sudo bee --root="/var/www/html" eval "system('/bin/bash')"
 ```
 
-![root-privilege](images/root-privilege.png) 
+![root-privilege](images/dog-root-privilege.png) 
 

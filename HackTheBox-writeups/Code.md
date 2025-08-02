@@ -38,17 +38,17 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
 The website seems to be a sandbox where we can execute Python code : 
 
-![code-website-sandbox](images/code-website-sandbox.png) 
+![website-sandbox](images/code-website-sandbox.png) 
 
 Testing the above code will work as expected :
 
-![](images/code-python-default-test.png)
+![python-default-test](images/code-python-default-test.png)
 
 However, any attempt at using `import` , `exec`, `eval` or `__builtins__` keywords are restricted : 
 
-![code-restricted-keywords-in-editor](images/code-restricted-keywords-in-editor.png)   
+![restricted-keywords-in-editor](images/code-restricted-keywords-in-editor.png)   
 
-![](images/code-restricted-keywords-in-editor-1.png) 
+![restricted-keywords-in-editor-1](images/code-restricted-keywords-in-editor-1.png) 
 
 This would have been convenient for us, as importing the `os` Python module might have let us execute system commands.
 
@@ -58,15 +58,15 @@ Hacktrick provides interesting resources to [bypass python sandbox protections a
 
 First let's see what we can access from the sandbox :
 
-![](images/code-python-references-access.png) 
+![python-references-access](images/code-python-references-access.png) 
 
 The `dir()`method reveals interesting classes and modules for us to further enumerate and investigate. So if we can access the `__class__`attribute from the string object, we see that it's base class inherits from the `object` class : 
 
-![](images/code-python-str-class-bases.png)
+![python-str-class-bases](images/code-python-str-class-bases.png)
 
 And if we can access the base class `object`,  then we are able to access its own `subclasses`: 
 
-![](images/code-python-object-subclasses.png) 
+![python-object-subclasses](images/code-python-object-subclasses.png) 
 
 This is important because it allows us to potentially access built-in functions and modules that might be restricted in the sandbox environment. Specifically, we can look for the `__import__` function, which is a built-in function used to import modules dynamically : 
 
@@ -75,9 +75,9 @@ print([ x.__init__.__globals__ for x in ''.__class__.__bases__[0].__subclasses__
 )
 ```
 
-![](images/code-builtins-from-object-class.png) 
+![builtins-from-object-class](images/code-builtins-from-object-class.png) 
 
-Now the idea would be to access it but since any keywords such as `import` or `os` are blacklisted from the sandbox, we can convert each Unicode character to its integer representation and recreate the string using both the `ord(<str>)` and `chr(<int>)` methods :
+By accessing the `__import__` function, we can bypass the restrictions on using keywords like `import` directly. Now the idea would be to access it but since any keywords such as `import` or `os` are blacklisted from the sandbox, we can convert each Unicode character to its integer representation and recreate the string using both the `ord(<str>)` and `chr(<int>)` methods :
 
 ```python
 >>> [ord(c) for c in list("__import__")]
@@ -98,7 +98,7 @@ print([ x.__init__.__globals__ for x in ''.__class__.__bases__[0].__subclasses__
 
 And test it directly into the sandbox : 
 
-![](images/code-sandbox-obfuscate.png) 
+![sandbox-obfuscate](images/code-sandbox-obfuscate.png) 
 
 As we successfully retrieved the `__import__` builtin function, we can import `subprocess`  and execute system commands as *subprocesses* : 
 
@@ -126,7 +126,7 @@ cmd_res = invoke_sub.run(['id'], capture_output=True, text=True)
 print(cmd_res)
 ```
 
-![](images/code-system-cmd-subprocess.png)
+![system-cmd-subprocess](images/code-system-cmd-subprocess.png)
 
 ## Foothold
 
@@ -162,21 +162,21 @@ nc -lnvp 4444
 
 and it works! We have a shell
 
-![](images/code-reverse-shell.png) 
+![reverse-shell](images/code-reverse-shell.png) 
 
 And we can get `user.txt` under `/home/app-production` : 
 
-![](images/code-app-production-get-user-txt.png) 
+![app-production-get-user-txt](images/code-app-production-get-user-txt.png) 
 
 ## Lateral Movement
 
  Doing further reconnaissance under the `app` directory :
 
-![](images/code-app-folder-recon.png)  
+![app-folder-recon](images/code-app-folder-recon.png)  
 
 `app.py` displays database hardcoded credentials under `/home/app-production/app/app.py`
 
-![code-db-credentials](images/code-db-credentials.png) 
+![db-credentials](images/code-db-credentials.png) 
 
 Checking current users access to the machine :
 
@@ -184,13 +184,13 @@ Checking current users access to the machine :
 app-production@code:~/app$ cat /etc/passwd | grep -i "/bin/bash"
 ```
 
-![code-etc-passwd](images/code-etc-passwd.png) 
+![etc-passwd](images/code-etc-passwd.png) 
 
 Trying to *ssh* using the secret key against `app-production` or `martin` does not succeed.
 
 There are some sqlite database under `/instance/database.db`
 
-![code-sqlite-db](images/code-sqlite-db.png) 
+![sqlite-db](images/code-sqlite-db.png) 
 
 Connecting to sqlite3 database and retrieving schema : 
 
@@ -198,7 +198,7 @@ Connecting to sqlite3 database and retrieving schema :
 
 Checking in users tables, we retrieve some users and passwords : 
 
-![](images/code-users-pass-db.png) 
+![users-pass-db](images/code-users-pass-db.png) 
 
 Password hashes seem to be md5 : 
 
@@ -206,7 +206,7 @@ Password hashes seem to be md5 :
 
 A quick search on *CrackStation* will provide a quick result for `martin` user : 
 
-![](images/code-crackstation-martin-password.png) 
+![crackstation-martin-password](images/code-crackstation-martin-password.png) 
 
 Testing those credentials to *ssh* as `martin` is successfull : 
 
@@ -214,59 +214,59 @@ Testing those credentials to *ssh* as `martin` is successfull :
 ssh martin@10.10.11.62
 ```
 
-![](images/code-ssh-martin.png) 
+![ssh-martin](images/code-ssh-martin.png) 
 
 ## Privilege Escalation
 
 We see that `martin` has *sudo* rights over `/usr/bin/backy.sh` script :
 
-![](images/code-martin-sudo-rights.png) 
+![martin-sudo-rights](images/code-martin-sudo-rights.png) 
 
 Looking for that script, there are some `task.json` that displays some configuration inside `backups` directory
 
-![](images/code-backups-dir.png) 
+![backups-dir](images/code-backups-dir.png) 
 
 `task.json` content displays json configuration where we can choose destination for backups and source (directories_to_archive)
 
-![](images/code-task-json.png) 
+![task-json](images/code-task-json.png) 
 
 Testing backy.sh with sudo privilege with the current configuration (task.json) works fine : 
 
-![](images/code-backy-script-test.png) 
+![backy-script-test](images/code-backy-script-test.png) 
 
 As we have root priviledges on backup script, what happens if we set a config file to try to backup `root` directory entirely : 
 
-![](images/code-backup-root.png) 
+![backup-root](images/code-backup-root.png) 
 
 but we get some errors : 
 
-![](images/code-dir-not-allowed.png) 
+![dir-not-allowed](images/code-dir-not-allowed.png) 
 
 Then we can trick the script into going first into one of the allowed directory, then moving back to parent and then root?
 
-![](images/code-backup-root-alt.png) 
+![backup-root-alt](images/code-backup-root-alt.png) 
 
 This time we can run the script, but it fails to make the archive : 
 
-![code-backy-archiving-failure](images/code-backy-archiving-failure.png) 
+![backy-archiving-failure](images/code-backy-archiving-failure.png) 
 
 As we can see, the script didn't followed our path. instead of `/home/../root`, it went directly to `/home/root`,  couldn't find any related directory and then `tar` command failed. There must be some kind of formatting in the script. 
 
 Inside `/usr/bin/backy.sh` the `updated_json` variable (at line 17) will truncate any `../` string present in `directories_to_archive` value : 
 
-![code-backy-string-sanitize](images/code-backy-string-sanitize.png) 
+![backy-string-sanitize](images/code-backy-string-sanitize.png) 
 
 We could try to bypass the formatting by adding more dots and achieve a pattern to resolve as `../` .  Doubling every filtered characters (`.` and `/`) might bypass that formatting : 
 
-![](images/code-json-config-bypass-format.png) 
+![json-config-bypass-format](images/code-json-config-bypass-format.png) 
 
  `backy` doesn't fail this time : 
 
-![](images/code-backy-archiving-root.png) 
+![backy-archiving-root](images/code-backy-archiving-root.png) 
 
 we get our archived folder : 
 
-![](images/code-root-archive.png) 
+![root-archive](images/code-root-archive.png) 
 
 and we are now able to extract root flag : 
 
@@ -274,5 +274,5 @@ and we are now able to extract root flag :
 martin@code:~/backups$ tar -xvf code_home_.._root_2025_August.tar.bz2 
 ```
 
-![](images/code-root-extract-flag.png) 
+![root-extract-flag](images/code-root-extract-flag.png) 
 

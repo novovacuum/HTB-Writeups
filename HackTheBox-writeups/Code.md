@@ -8,7 +8,7 @@
 
 ## Introduction
 
-This machine begins with identifing some python sandbox where users can test and execute code. We'll find a way to circumvent restricted keywords to execute system commands and reverse shell. We can set a foothold using credentials stored within sqlite database instance. We'll finally abuse a bash script will be exploited to escalate our privileges and gain root access.
+This machine begins with identifing some python sandbox where users can test and execute code. We'll find a way to circumvent restricted keywords to execute system commands and reverse shell. We can set a foothold using credentials stored within sqlite database instance. We'll finally abuse a bash script to escalate our privileges and gain root access.
 
 ## Enumeration
 

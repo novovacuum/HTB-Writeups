@@ -8,7 +8,7 @@
 
 ## Introduction
 
-This machine begins with identifing some python sandbox where users can test and execute code. We'll find a way to circumvent restricted keywords to execute system commands and reverse shell. We can set a foothold using credentials stored within sqlite database instance. We'll finally abuse a bash script to escalate our privileges and gain root access.
+This machine begins with identifying a Python sandbox where users can test and execute code. We'll find a way to circumvent restricted keywords to execute system commands and set up a reverse shell. We can establish a foothold using credentials stored within an SQLite database instance. Finally, we'll abuse a bash script to escalate our privileges and gain root access.
 
 ## Enumeration
 
@@ -36,7 +36,7 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 
 ```
 
-The website seems to be a sandbox where we can execute python code : 
+The website seems to be a sandbox where we can execute Python code : 
 
 ![code-website-sandbox](images/code-website-sandbox.png) 
 
@@ -44,13 +44,13 @@ Testing the above code will work as expected :
 
 ![](images/code-python-default-test.png)
 
-But any attempt at using `import` , `exec`, `eval` or `__builtins__` keywords are restricted : 
+However, any attempt at using `import` , `exec`, `eval` or `__builtins__` keywords are restricted : 
 
 ![code-restricted-keywords-in-editor](images/code-restricted-keywords-in-editor.png)   
 
 ![](images/code-restricted-keywords-in-editor-1.png) 
 
-This would have been convenient for us, as importing `os` python module might have let us execute system commands.
+This would have been convenient for us, as importing the `os` Python module might have let us execute system commands.
 
 Hacktrick provides interesting resources to [bypass python sandbox protections and execute arbitrary commands](https://book.hacktricks.wiki/en/generic-methodologies-and-resources/python/bypass-python-sandboxes/index.html#command-execution-libraries), that we'll use to further test what we can do. 
 
@@ -68,7 +68,7 @@ And if we can access the base class `object`,  then we are able to access its ow
 
 ![](images/code-python-object-subclasses.png) 
 
-Which means that the `builtins`  from the loaded class might involve the `__import__` module function : 
+This is important because it allows us to potentially access built-in functions and modules that might be restricted in the sandbox environment. Specifically, we can look for the `__import__` function, which is a built-in function used to import modules dynamically : 
 
 ```python
 print([ x.__init__.__globals__ for x in ''.__class__.__bases__[0].__subclasses__() if "wrapper" not in str(x.__init__)][0].keys()
@@ -77,7 +77,7 @@ print([ x.__init__.__globals__ for x in ''.__class__.__bases__[0].__subclasses__
 
 ![](images/code-builtins-from-object-class.png) 
 
-Now the idea would be to access it but since any keywords such as `import` or `os` are blacklisted from the sandbox, we must find a way to invoke them before evaluation. One easy way would be to converts each Unicode character to its integer representation and recreate the string using both `ord(<str>)` and `chr(<int>)`  methods :
+Now the idea would be to access it but since any keywords such as `import` or `os` are blacklisted from the sandbox, we can convert each Unicode character to its integer representation and recreate the string using both the `ord(<str>)` and `chr(<int>)` methods :
 
 ```python
 >>> [ord(c) for c in list("__import__")]
@@ -204,7 +204,7 @@ Password hashes seem to be md5 :
 
 ![hashid](images/code-hashid.png) 
 
-A quick search on CrackStation will provide a quick result for `martin` user : 
+A quick search on *CrackStation* will provide a quick result for `martin` user : 
 
 ![](images/code-crackstation-martin-password.png) 
 
